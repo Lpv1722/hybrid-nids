@@ -49,11 +49,12 @@ The trained model is saved to `models/isolation_forest.joblib`.
 
 ## Usage
 
+A pretrained Isolation Forest model is included in the repository.
+Model training is optional.
+
 Place PCAP files in `data/pcaps/` and run:
 
-```bash
-python main.py
-```
+    python main.py
 
 Analysis results are saved to `data/anomalies.csv`.
 
