@@ -1,7 +1,9 @@
 import pandas as pd
 import joblib
-from rule_engine import detect_rules
+
 from pathlib import Path
+from src.detection.rule_engine import detect_rules
+
 
 MODEL_PATH = Path("models/isolation_forest.joblib")
 DATA_PATH = Path("data/flows.csv")
@@ -26,44 +28,59 @@ FEATURES = [
 	"syn_only_count"
 ]
 
-# Load trained model
-pipeline = joblib.load(MODEL_PATH)
 
-# Load extracted flows
-df = pd.read_csv(DATA_PATH)
+class AnomalyDetector:
+	def __init__(self, model_path=MODEL_PATH):
+		self.pipeline = joblib.load(model_path)
 
-if df.empty:
-	raise ValueError("No flows to analyze")
+	def detect(self, df):
+		df = df.copy()
 
-X = df[FEATURES].copy()
+		if df.empty:
+			return df
 
-# Detect anomalies
-df["prediction"] = pipeline.predict(X)
-df["anomaly_score"] = pipeline.decision_function(X)
+		X = df[FEATURES].copy()
 
-df["status"] = df["prediction"].map({
-	1: "Normal",
-	-1: "Anomaly"
-})
+		df["prediction"] = self.pipeline.predict(X)
+		df["anomaly_score"] = self.pipeline.decision_function(X)
 
-# Rule-based detection
-df["rule_alert"] = df.apply(detect_rules, axis=1)
+		df["status"] = df["prediction"].map({
+			1: "Normal",
+			-1: "Anomaly"
+		})
 
-# Preserve original ML result
-df["ml_status"] = df["status"]
+		df["rule_alert"] = df.apply(detect_rules, axis=1)
 
-# Hybrid detection
-ml_detected = df["ml_status"] == "Anomaly"
-rule_detected = df["rule_alert"] != ""
+		df["ml_status"] = df["status"]
 
-df["detection_source"] = "None"
+		ml_detected = df["ml_status"] == "Anomaly"
+		rule_detected = df["rule_alert"] != ""
 
-df.loc[ml_detected, "detection_source"] = "ML"
-df.loc[rule_detected, "detection_source"] = "Rule"
-df.loc[ml_detected & rule_detected, "detection_source"] = "ML + Rule"
+		df["detection_source"] = "None"
 
-df.loc[ml_detected | rule_detected, "status"] = "Anomaly"
+		df.loc[ml_detected, "detection_source"] = "ML"
+		df.loc[rule_detected, "detection_source"] = "Rule"
+		df.loc[ml_detected & rule_detected, "detection_source"] = "ML + Rule"
 
-df.to_csv("data/anomalies.csv", index=False)
+		df.loc[ml_detected | rule_detected, "status"] = "Anomaly"
 
-print("\nResults saved to data/anomalies.csv")
+		return df
+
+
+def main():
+	detector = AnomalyDetector()
+
+	df = pd.read_csv(DATA_PATH)
+
+	if df.empty:
+		raise ValueError("No flows to analyze")
+
+	results = detector.detect(df)
+
+	results.to_csv("data/anomalies.csv", index=False)
+
+	print("\nResults saved to data/anomalies.csv")
+
+
+if __name__ == "__main__":
+	main()

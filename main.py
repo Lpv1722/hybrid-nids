@@ -1,18 +1,69 @@
+
+import argparse
 import subprocess
 import sys
 
-scripts = [
-	"src/processing/flow_extractor.py",
-	"src/detection/anomaly_detector.py",
-	"src/reporting/report.py"
-]
 
-print("Starting NIDS...", flush=True)
-
-for script in scripts:
-	subprocess.run(
-		[sys.executable, script],
-		check=True
+def main():
+	parser = argparse.ArgumentParser(
+		description="Hybrid Network Intrusion Detection System"
 	)
 
-print("\nAnalysis completed!")
+	parser.add_argument(
+		"--mode",
+		choices=["offline", "live"],
+		default="offline"
+	)
+
+	parser.add_argument(
+		"--interface",
+		default=None
+	)
+
+	parser.add_argument(
+		"--timeout",
+		type=int,
+		default=60
+	)
+
+	args = parser.parse_args()
+
+	if args.mode == "offline":
+		modules = [
+			"src.processing.flow_extractor",
+			"src.detection.anomaly_detector",
+			"src.reporting.report"
+		]
+
+		print("Starting offline NIDS...", flush=True)
+
+		for module in modules:
+			subprocess.run(
+				[sys.executable, "-m", module],
+				check=True
+			)
+
+		print("\nAnalysis completed!")
+
+	elif args.mode == "live":
+		if not args.interface:
+			parser.error("--interface is required in live mode")
+
+		print("Starting live NIDS...", flush=True)
+
+		subprocess.run(
+			[
+				sys.executable,
+				"-m",
+				"src.capture.live_capture",
+				"--interface",
+				args.interface,
+				"--timeout",
+				str(args.timeout)
+			],
+			check=True
+		)
+
+
+if __name__ == "__main__":
+	main()
