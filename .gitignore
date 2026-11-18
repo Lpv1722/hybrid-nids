@@ -29,3 +29,6 @@ models/*.pkl
 
 # Environment variables
 .env
+
+# Logs
+logs/

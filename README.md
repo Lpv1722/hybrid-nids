@@ -58,6 +58,18 @@ Place PCAP files in `data/pcaps/` and run:
 
 Analysis results are saved to `data/anomalies.csv`.
 
+### Offline Analysis
+
+The system includes a PCAP analyzer that processes captured network traffic and detects potential anomalies using machine learning and rule-based detection.
+
+To analyze PCAP files, place them in `data/pcaps/` and run:
+
+```bash
+python main.py --mode offline
+```
+
+Analysis results are saved to `data/anomalies.csv`.
+
 ## Preliminary Results
 
 | Test scenario | Total flows | Flagged flows | Anomaly rate |

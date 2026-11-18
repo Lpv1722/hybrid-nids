@@ -3,7 +3,7 @@ import pandas as pd
 
 from pathlib import Path
 from scapy.all import PcapReader
-from flow_manager import FlowManager
+from src.processing.flow_manager import FlowManager
 
 
 parser = argparse.ArgumentParser()
