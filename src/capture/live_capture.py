@@ -2,6 +2,7 @@
 import argparse
 import time
 import pandas as pd
+import psycopg
 
 from scapy.all import sniff
 
@@ -9,7 +10,7 @@ from src.processing.flow_manager import FlowManager
 from src.detection.anomaly_detector import AnomalyDetector
 from src.reporting.alert_manager import AlertManager
 from src.reporting.alert_logger import setup_logger
-
+from src.database.database import create_analysis_run, save_live_alert
 
 def main():
 	parser = argparse.ArgumentParser()
@@ -24,6 +25,11 @@ def main():
 	alert_manager = AlertManager()
 	logger = setup_logger()
 
+	try:
+		run_id = create_analysis_run("live")
+	except psycopg.Error as e:
+		print(f"[WARNING] Database unavailable: {e}")
+		run_id = None
 	def process_packet(packet):
 		manager.process_packet(packet)
 
@@ -76,6 +82,11 @@ def main():
 
 			print(message, flush=True)
 			logger.info(log_message)
+			if run_id is not None:
+				try:
+					save_live_alert(flow, run_id)
+				except psycopg.Error as e:
+					logger.error(f"Database error: {e}")
 
 	print(f"Starting live NIDS on {args.interface}...")
 
@@ -85,7 +96,8 @@ def main():
 				iface=args.interface,
 				prn=process_packet,
 				store=False,
-				timeout=1
+				timeout=1,
+				chainCC=True
 			)
 
 			now = time.time()

@@ -70,6 +70,25 @@ python main.py --mode offline
 
 Analysis results are saved to `data/anomalies.csv`.
 
+## Database Setup
+
+The system uses PostgreSQL to store network flows, alerts,
+and analysis history.
+
+Create a configuration file and set your password:
+
+```bash
+cp .env.example .env
+```
+
+Start PostgreSQL:
+
+```bash
+docker compose up -d
+```
+
+The database schema is initialized automatically on the first startup.
+
 ## Preliminary Results
 
 | Test scenario | Total flows | Flagged flows | Anomaly rate |
