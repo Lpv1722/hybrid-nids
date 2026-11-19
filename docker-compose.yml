@@ -1,0 +1,27 @@
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: nids-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: nids
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: nids_db
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nids -d nids_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:

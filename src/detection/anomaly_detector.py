@@ -3,7 +3,7 @@ import joblib
 
 from pathlib import Path
 from src.detection.rule_engine import detect_rules
-
+from src.database.database import create_analysis_run, save_flows
 
 MODEL_PATH = Path("models/isolation_forest.joblib")
 DATA_PATH = Path("data/flows.csv")
@@ -78,6 +78,9 @@ def main():
 	results = detector.detect(df)
 
 	results.to_csv("data/anomalies.csv", index=False)
+
+	run_id = create_analysis_run("offline")
+	save_flows(results, run_id)
 
 	print("\nResults saved to data/anomalies.csv")
 
